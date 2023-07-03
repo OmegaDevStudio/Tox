@@ -16,24 +16,37 @@ def show_options():
             report.show_children()
     elem_picks = []
     picks = [3]
+
     while True:
         inp = input("\n\nPlease pick a value [>] ")
+
         try:
             inp = int(inp)
         except Exception:
             inp = str(inp)
+
         for report in reports:
+
             if type(inp) == int:
                 if report.id == inp:
                     picks.append(inp)
-                    if len(report.children) > 0:
-                        print("\nHere are your options")
-                        print(report.header,"\n")
-                        report.show_children()
-                    elif len(report.elements) > 0:
-                        print("\nHere are your options")
-                        print(report.header, "\n")
-                        report.show_elements()
+                    try:
+                        if len(report.children) > 0:
+                            print("\nHere are your options")
+                            print(report.header,"\n")
+                            report.show_children()
+                            break
+                        
+                 
+                        elif next(elem for elem in report.elements if len(elem.data) > 0):
+                            print("\nHere are your options")
+                            print(report.header, "\n")
+                            report.show_elements()
+                            break
+                    except StopIteration:
+                        print(f"Report Complete! You picked {picks}")
+                        return
+
                     else:
                         print(f"Report Complete! You picked {picks}")
                         return
