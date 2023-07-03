@@ -26,9 +26,8 @@ class Report:
 
     def show_elements(self):
         for elem in self.elements:
-            print(f"{elem.name}   :   {elem.type}")
             for data in elem.data:
-                print(f"{data.id}   :   {data.description}")
+                print(f"{data.description}   :   {data.id}")
 
 
 class Element:
@@ -48,9 +47,11 @@ class Element_data:
         try:
             self.id = data[0]
             self.description = data[1]
+            self.fake_val = None
         except IndexError:
             self.id = None
             self.description = None
+            self.fake_val = None
 
 class Children:
     def __init__(self, data) -> None:
