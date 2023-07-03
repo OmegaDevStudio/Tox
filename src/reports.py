@@ -2,7 +2,9 @@
 class Report:
     def __init__(self, data) -> None:
         self._update(data)
-
+        
+    def __str__(self) -> str:
+        return f"{self.name}   :   {self.id}"
     def _update(self, data):
         self.id = data['id']
         self.name = data['key']
@@ -13,8 +15,20 @@ class Report:
             self.elements: list[Element] = [Element(data) for data in data['elements']]
         else:
             self.elements = []
-        
-        self.children: list[Children] = [Children(data) for data in data['children']]
+        if len(data['children']) > 0:
+            self.children: list[Children] = [Children(data) for data in data['children']]
+        else:
+            self.children = []
+    
+    def show_children(self):
+        for child in self.children:
+            print(f"{child.reason}   :   {child.value}")
+
+    def show_elements(self):
+        for elem in self.elements:
+            print(f"{elem.name}   :   {elem.type}")
+            for data in elem.data:
+                print(f"{data.id}   :   {data.description}")
 
 
 class Element:
