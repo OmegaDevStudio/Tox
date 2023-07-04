@@ -1,21 +1,36 @@
-import json, aiohttp,asyncio,ujson
+import asyncio
+import json
+
+import aiohttp
+import ujson
 
 from src import Report
 
-json = json.loads(open("./src/values.json").read())
+opt = input("Please input type of report.\nMessage\nGuild\n[>] ")
+if opt.lower() == "message":
+    json = json.loads(open("./src/message.json").read())
+else:
+    json = json.loads(open("./src/guild.json").read())
 reports: list[Report] = []
 
 def initial_load():
     for _, item in json['nodes'].items():
         reports.append(Report(item))
 elem_picks = []
-picks = [3]
+if opt.lower() == "message":
+    picks = [3]
+else:
+    picks = [0]
 def show_options():
     for report in reports:
-        if report.id == 3:
-            print("Here are your options:\n")
-            report.show_children()
-
+        if opt.lower() == "message":
+            if report.id == 3:
+                print("here are your options:\n")
+                report.show_children()
+        else:
+            if report.id == 0:
+                print("here are your options:\n")
+                report.show_children()
 
     while True:
         inp = input("\n\nPlease pick a value [>] ")
@@ -45,25 +60,25 @@ def show_options():
                             break
                     except StopIteration:
                         print(f"Report Complete! You picked {picks}")
-                        return
+                        return picks
 
                     else:
                         print(f"Report Complete! You picked {picks}")
-                        return
+                        return picks
             else:
                 for elem in report.elements:
                     for data in elem.data:
                         if data.id == inp:
                             elem_picks.append(inp)
                             print(f"Report Complete! You picked {picks} and {elem_picks}")
-                            return
+                            return picks, elem_picks
 
 
 async def main():
     initial_load()
     show_options()
-    token = 'MTEwOTQzMjQ0ODQzNTEwNTg5NA.'
-    async with aiohttp.ClientSession(headers={'Authorization':token}, connector=aiohttp.TCPConnector(ssl=False, keepalive_timeout=10, limit=0, limit_per_host=0), trust_env=False, skip_auto_headers=None, json_serialize=ujson.dumps, auto_decompress=True) as session:
+    token = 'tok'
+    async with aiohttp.ClientSession(headers={'Authorization':token}, json_serialize=ujson.dumps) as session:
         x = await session.get('https://discord.com/api/v9/users/@me')
         if x.status == 401:
             print('Invalid token.')
@@ -80,8 +95,12 @@ async def main():
                 "name":"message",
                 "channel_id":ch_id,
                 "message_id":msg_id
-                }
-            tox = await session.post('https://discord.com/api/v9/reporting/message', json=report_payload)
+            }
+            if opt.lower() == "message":
+                tox = await session.post('https://discord.com/api/v9/reporting/message', json=report_payload)
+            else:
+                tox = await session.post('https://discord.com/api/v9/reporting/guild', json=report_payload)
             print(tox.status)
-            xx = await tox.json() ; print(xx)
+            xx = await tox.json()
+            print(xx)
 asyncio.run(main())
