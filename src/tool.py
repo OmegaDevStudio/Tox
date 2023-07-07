@@ -123,6 +123,8 @@ class Tox:
                     "name":"guild",
                     "guild_id": self.guild_id 
                 }
+                if len(self.elem_picks) > 0:
+                    payload.update({"elements": {"nsfw_location_select": self.elem_picks}})
                 url = 'https://discord.com/api/v9/reporting/guild'
             async with session.post(url, headers=headers, json=payload) as resp:
                 resp = await resp.json()
