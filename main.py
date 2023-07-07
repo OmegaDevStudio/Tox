@@ -1,8 +1,10 @@
 import asyncio
+import os
 
 from src import Tox
 
-
+if os.name == "nt":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 async def main():
     token = input("Please input your token [>] ")
     opt = input("Please input type of report.\nMessage\nGuild\n[>] ")
