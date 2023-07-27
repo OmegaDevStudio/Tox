@@ -22,12 +22,12 @@ class Report:
     
     def show_children(self):
         for child in self.children:
-            print(f"{child.reason}   :   {child.value}")
+            print(f"        [ {child.reason} ]   :   {child.value}")
 
     def show_elements(self):
         for elem in self.elements:
             for data in elem.data:
-                print(f"{data.description}   :   {data.id}")
+                print(f"        [ {data.description} ]   :   {data.id}")
 
 
 class Element:

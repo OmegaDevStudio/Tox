@@ -1,11 +1,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 
 import aiohttp
+from aioconsole import ainput, aprint
 
+from .ascii import Menu
 from .reports import Report
 
 
@@ -18,31 +21,52 @@ class Tox:
         self.json: Any = None
         self.message_link: str | None = None
         self.guild_id: str | None = None
+        self.menu = Menu()
+    
+    @staticmethod
+    async def validate(token: str):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://discord.com/api/v9/users/@me",
+                headers={"Authorization": token, "Content-Type": "application/json", "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.162 Chrome/108.0.5359.215 Electron/22.3.12 Safari/537.36"}
 
+            ) as resp:
+                
+                if resp.ok:
 
-    def load(self, report_type: str) -> Tox:
+                    return True
+                return False
+                
+
+    async def load(self, report_type: str, guild_id: str | None = None, link: str | None = None) -> Tox:
         if report_type == "message":
-            self.message_link = input("Please input a message link [>] ")
+            if link is None:
+                self.message_link = await self.menu.input("Please input a message link.")
+            else:
+                self.message_link = link
         if report_type == "guild":
-            self.guild_id = input("Please input a guild id [>] ")
-        self.json = json.loads(open(f"./src/{report_type.lower()}.json").read())
+            if guild_id is None:
+                self.guild_id = await self.menu.input("Please input a guild id.")
+            else:
+                self.guild_id = guild_id
+        self.json = json.loads(open(f"./src/{report_type.lower()}.json", encoding="utf-8").read())
         for _, item in self.json['nodes'].items():
             self.reports.append(Report(item))
         return self
 
-    def show_options(self):
+    async def show_options(self):
         for report in self.reports:
             if report.id == self.initial_value:
-                print("here are your options:\n")
+                await aprint("Here are your options:\n")
                 report.show_children()
 
         while True:
         
-            inp = input("\n\nPlease pick a value [>] ")
+            inp = await self.menu.input("\n\nPlease pick a value.")
 
             try:
                 inp = int(inp)
-            except Exception:
+            except ValueError:
                 inp = str(inp)
             for report in self.reports: 
                 if isinstance(inp, int):
@@ -50,7 +74,6 @@ class Tox:
                         self.picks.append(inp)
                         try:
                             if len(report.children) > 0:
-                                print("\nHere are your options")
                                 print(report.header,"\n")
                                 report.show_children()
                             elif next(elem for elem in report.elements if len(elem.data) > 0):
@@ -95,38 +118,57 @@ class Tox:
             'Sec-Fetch-Site': 'same-origin',
             'TE': 'trailers'
         }
-        async with aiohttp.ClientSession() as session:
-            if self.message_link is not None:
-                split = self.message_link.split("/")
-                msg_id = split[-1]
-                ch_id = split[-2]
-                payload = {
-                    "version":"1.0",
-                    "variant":"3",
-                    "language":"en",
-                    "breadcrumbs":self.picks,
-                    "elements":{},
-                    "name":"message",
-                    "channel_id":ch_id,
-                    "message_id":msg_id
-                }
-                if len(self.elem_picks) > 0:
-                    payload.update({"elements": {'pii_select':self.elem_picks}})
-                url = 'https://discord.com/api/v9/reporting/message'
-            elif self.guild_id is not None:
-                payload = {
-                    "version":"1.0",
-                    "variant":"3",
-                    "language":"en",
-                    "breadcrumbs":self.picks,
-                    "elements":{},
-                    "name":"guild",
-                    "guild_id": self.guild_id 
-                }
-                if len(self.elem_picks) > 0:
-                    payload.update({"elements": {"nsfw_location_select": self.elem_picks}})
-                url = 'https://discord.com/api/v9/reporting/guild'
-            async with session.post(url, headers=headers, json=payload) as resp:
-                resp = await resp.json()
-                print(resp)
-    
+        while True:
+            try:
+                async with aiohttp.ClientSession() as session:
+                    if self.message_link is not None:
+                        split = self.message_link.split("/")
+                        msg_id = split[-1]
+                        ch_id = split[-2]
+                        payload = {
+                            "version":"1.0",
+                            "variant":"3",
+                            "language":"en",
+                            "breadcrumbs":self.picks,
+                            "elements":{},
+                            "name":"message",
+                            "channel_id":ch_id,
+                            "message_id":msg_id
+                        }
+                        if len(self.elem_picks) > 0:
+                            payload.update({"elements": {'pii_select':self.elem_picks}})
+                        url = 'https://discord.com/api/v9/reporting/message'
+                    elif self.guild_id is not None:
+                        payload = {
+                            "version":"1.0",
+                            "variant":"3",
+                            "language":"en",
+                            "breadcrumbs":self.picks,
+                            "elements":{},
+                            "name":"guild",
+                            "guild_id": self.guild_id 
+                        }
+                        if len(self.elem_picks) > 0:
+                            payload.update({"elements": {"nsfw_location_select": self.elem_picks}})
+                        url = 'https://discord.com/api/v9/reporting/guild'
+
+                    async with session.post(url, headers=headers, json=payload) as resp:
+                        if resp.ok:
+                            resp = await resp.json()
+                            await aprint(resp)
+                            break
+                        if resp.status == 429:
+                            json = await resp.json()
+                            if json['retry_after'] > 20:
+                                break
+                            await asyncio.sleep(json['retry_after'])
+                        else:
+                            text = await resp.text()
+                            await aprint(text)
+                            break
+            except Exception as e:
+                await aprint(e)
+        
+    async def spam(self, token: str):
+        for _ in range(10):
+            await self.trigger(token)
