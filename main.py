@@ -33,22 +33,9 @@ async def main():
             await cmd.func()
 
 
-@tox.cmd(description="Filters message content within a guild")
-async def scrape_msgs():
-    reporter = Tox()
-    guild_id = config["guild_id"]
-    if guild_id == "":
-        await reporter.load("guild")
-    else:
-        await reporter.load("guild", guild_id=guild_id)
-
-    await reporter.filter_msgs(TOKEN, "sex")
-
-
 @tox.cmd(description="Shows command help")
 async def help():
     await tox.show_cmds()
-
 
 @tox.cmd(description="Clears the terminal")
 async def clear():
@@ -95,4 +82,27 @@ async def msg_report():
     await aprint(await reporter.trigger(TOKEN, amount))
 
 
+@tox.cmd(description="Filters message content within a guild")
+async def scrape_guild():
+    menu = Menu()
+    reporter = Tox()
+    guild_id = config["guild_id"]
+    if guild_id == "":
+        await reporter.load("guild")
+    else:
+        await reporter.load("guild", guild_id=guild_id)
+    content = await menu.input("Please input the message content you wish to search for.")
+    msgs = await reporter.filter_guild(TOKEN, content)
+    await menu.write_file(msgs)
+
+@tox.cmd(description="Filters message content within a channel")
+async def scrape_channel():
+    menu = Menu()
+    reporter = Tox()
+    channel_id = config['channel_id']
+    if channel_id == "":
+        channel_id = await menu.input("Please input the channel_id you would like to search.")
+    content = await menu.input("Please input message content you wish to search for.")
+    msgs = await reporter.filter_channel(TOKEN, channel_id, content)
+    await menu.write_file(msgs)
 asyncio.run(main())
