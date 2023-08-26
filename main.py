@@ -1,52 +1,98 @@
 import asyncio
 import os
-from configparser import ConfigParser
-
+import json
 from aioconsole import aprint
 from colorama import Fore as color
 
-from src import Menu, Tox
+from src import Menu, Tox, Handler
 
-if os.name == "nt":
-    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
-config = ConfigParser()
-config.read("config.ini")
+with open("./config.json", "r") as f:
+    config = json.load(f)
+
+
+if config["token"] != "":
+    TOKEN = config["token"]
+else:
+    TOKEN = input(f"{color.GREEN}Please input your token.{color.RESET}")
+tox = Handler()
 
 
 async def main():
+    if not await Tox.validate(TOKEN):
+        raise RuntimeError("Invalid Token. YOU SUCKETH BALLS.")
     menu = Menu()
     menu.clear()
-    token = config["USER"]["Token"]
+    await aprint(menu)
+    await tox.show_cmds()
+    while True:
+        inp = await menu.input("Please enter your option.")
+        cmd = tox.handle_input(inp)
+        if cmd is not None:
+            await aprint()
+            await cmd.func()
+
+
+@tox.cmd(description="Filters message content within a guild")
+async def scrape_msgs():
+    reporter = Tox()
+    guild_id = config["guild_id"]
+    if guild_id == "":
+        await reporter.load("guild")
+    else:
+        await reporter.load("guild", guild_id=guild_id)
+
+    await reporter.filter_msgs(TOKEN, "sex")
+
+
+@tox.cmd(description="Shows command help")
+async def help():
+    await tox.show_cmds()
+
+
+@tox.cmd(description="Clears the terminal")
+async def clear():
+    menu = Menu()
+    menu.clear()
     await aprint(menu)
 
-    if token == "":
-        token = await menu.input("Please input your token.")
 
-    if await Tox.validate(token):
-        opt = await menu.input("Please input the report type.")
-        if opt.lower() == "message":
-            tox = Tox(3)
-            link = config["USER"]["Link"]
-            if link == "":
-                await tox.load("message")
-            else:
-                await tox.load("message", link=link)
-            await tox.show_options()
-            await aprint(await tox.trigger(token, 3))
-        else:
-            tox = Tox(0)
-            guild = config["USER"]["Guild"]
+@tox.cmd(description="Reports a guild using an id")
+async def guild_report():
+    menu = Menu()
+    menu.clear()
+    await aprint(menu)
 
-            if guild == "":
-                await tox.load("guild")
-            else:
-                await tox.load("guild", guild_id=guild)
-            await tox.show_options()
-            await aprint(await tox.trigger(token, 3))
+    reporter = Tox(0)
+    guild_id = config["guild_id"]
+    if guild_id == "":
+        await reporter.load("guild")
     else:
-        await aprint(f"{color.RED}Invalid Token: {token}{color.RESET}")
+        await reporter.load("guild", guild_id=guild_id)
+    await reporter.show_options()
+    amount = int(
+        await menu.input("Please input how many times you'd like to send the report")
+    )
+    await aprint(await reporter.trigger(TOKEN, amount))
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+@tox.cmd(description="Reports a message using a link")
+async def msg_report():
+    menu = Menu()
+    menu.clear()
+    await aprint(menu)
+
+    reporter = Tox(3)
+    link = config["link"]
+    if link == "":
+        await reporter.load("message")
+    else:
+        await reporter.load("message", link=link)
+    await reporter.show_options()
+    amount = int(
+        await menu.input("Please input how many times you'd like to send the report")
+    )
+    await aprint(await reporter.trigger(TOKEN, amount))
+
+
+asyncio.run(main())

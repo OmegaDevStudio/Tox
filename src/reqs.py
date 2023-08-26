@@ -14,14 +14,11 @@ class RequestHandler:
         self.session: aiohttp.ClientSession = aiohttp.ClientSession(
             *args, **kwargs,
             connector=aiohttp.TCPConnector(
-                ssl=False,
                 keepalive_timeout=10,
                 ttl_dns_cache=204,
                 limit=0,
                 limit_per_host=0,
             ),
-            trust_env=False,
-            skip_auto_headers=None,
             json_serialize=ujson.dumps,
             auto_decompress=True,
         )
