@@ -37,6 +37,7 @@ async def main():
 async def help():
     await tox.show_cmds()
 
+
 @tox.cmd(description="Clears the terminal")
 async def clear():
     menu = Menu()
@@ -44,11 +45,22 @@ async def clear():
     await aprint(menu)
 
 
+@tox.cmd(description="Reports a user using an id")
+async def user_report():
+    menu = Menu()
+
+    reporter = Tox()
+    user_id = config["user_id"]
+    user_id = await menu.input("Please input a user id.")
+    amount = int(
+        await menu.input("Please input how many times you'd like to send the report")
+    )
+    await aprint(await reporter.trigger(TOKEN, amount, user_id))
+
+
 @tox.cmd(description="Reports a guild using an id")
 async def guild_report():
     menu = Menu()
-    menu.clear()
-    await aprint(menu)
 
     reporter = Tox(0)
     guild_id = config["guild_id"]
@@ -66,8 +78,6 @@ async def guild_report():
 @tox.cmd(description="Reports a message using a link")
 async def msg_report():
     menu = Menu()
-    menu.clear()
-    await aprint(menu)
 
     reporter = Tox(3)
     link = config["link"]
@@ -91,18 +101,25 @@ async def scrape_guild():
         await reporter.load("guild")
     else:
         await reporter.load("guild", guild_id=guild_id)
-    content = await menu.input("Please input the message content you wish to search for.")
+    content = await menu.input(
+        "Please input the message content you wish to search for."
+    )
     msgs = await reporter.filter_guild(TOKEN, content)
     await menu.write_file(msgs)
+
 
 @tox.cmd(description="Filters message content within a channel")
 async def scrape_channel():
     menu = Menu()
     reporter = Tox()
-    channel_id = config['channel_id']
+    channel_id = config["channel_id"]
     if channel_id == "":
-        channel_id = await menu.input("Please input the channel_id you would like to search.")
+        channel_id = await menu.input(
+            "Please input the channel_id you would like to search."
+        )
     content = await menu.input("Please input message content you wish to search for.")
     msgs = await reporter.filter_channel(TOKEN, channel_id, content)
     await menu.write_file(msgs)
+
+
 asyncio.run(main())

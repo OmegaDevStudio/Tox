@@ -31,8 +31,8 @@ class Tox:
         self.elem_picks: list[str] = []
         self.reports: list[Report] = []
         self.json: Optional[Any] = None
-        self.message_link: str | None = None
-        self.guild_id: str | None = None
+        self.message_link: Optional[str] = None
+        self.guild_id: Optional[str] = None
         self.menu = Menu()
 
     @staticmethod
@@ -124,7 +124,7 @@ class Tox:
                                 )
                                 return
 
-    async def trigger(self, token: str, amount: int = 1):
+    async def trigger(self, token: str, amount: int = 1, user_id: Optional[str] = None):
         headers = {
             "Host": "discord.com",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/114.0",
@@ -197,6 +197,26 @@ class Tox:
                 resps = await req.gather_json(resps)
                 return resps
 
+            if user_id is not None:
+                payload = {
+                    "version": "1.0",
+                    "variant": "3",
+                    "language": "en",
+                    "breadcrumbs": self.picks,
+                    "elements": {},
+                    "name": "user",
+                    "user_id": user_id,
+                }
+
+                resps = await req.gather_requests(
+                    [
+                        req.request("POST", "/user", headers=headers, json=payload)
+                        for i in range(amount)
+                    ]
+                )
+                resps = await req.gather_json(resps)
+                return resps
+
             return "No valid json"
 
     async def filter_guild(self, token: str, content: str):
@@ -235,14 +255,11 @@ class Tox:
             final = []
             responses = await req.gather_json(resps)
             for resp in responses:
-
-
                 for msgs in resp["messages"]:
                     for msg in msgs:
                         final.append(Message(msg, self.guild_id))
 
             return final
-    
 
     async def filter_channel(self, token: str, channel_id: str, content: str):
         headers = {
@@ -282,10 +299,10 @@ class Tox:
             for resp in responses:
                 await aprint(resp)
 
-
-                for msgs in resp["messages"] if resp.get("messages") is not None else []:
+                for msgs in (
+                    resp["messages"] if resp.get("messages") is not None else []
+                ):
                     for msg in msgs:
                         final.append(Message(msg, self.guild_id))
 
             return final
-
