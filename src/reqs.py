@@ -12,7 +12,8 @@ class RequestHandler:
 
     def __init__(self, base_url: Optional[str] = None, *args, **kwargs) -> None:
         self.session: aiohttp.ClientSession = aiohttp.ClientSession(
-            *args, **kwargs,
+            *args,
+            **kwargs,
             connector=aiohttp.TCPConnector(
                 keepalive_timeout=10,
                 ttl_dns_cache=204,
@@ -25,11 +26,11 @@ class RequestHandler:
         if base_url is not None:
             self.root = base_url
 
-    async def request(self, method: str, url: str, *args, **kwargs) -> aiohttp.ClientResponse:
+    async def request(
+        self, method: str, url: str, *args, **kwargs
+    ) -> aiohttp.ClientResponse:
         """Generates a request"""
-        return await self.session.request(
-            method, self.root + url, *args, **kwargs
-        )
+        return await self.session.request(method, self.root + url, *args, **kwargs)
 
     async def gather_requests(
         self, reqs: list[Awaitable]
@@ -70,5 +71,3 @@ class RequestHandler:
     async def __aexit__(self, exc_type, exc_value, exc_tb):
         """Exits context manager"""
         return await self.close()
-
-
