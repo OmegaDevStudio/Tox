@@ -46,11 +46,9 @@ async def clear():
 
 
 @tox.cmd(description="Reports a user using an id")
-async def user_report():
+async def user():
     menu = Menu()
-
     reporter = Tox()
-    user_id = config["user_id"]
     user_id = await menu.input("Please input a user id.")
     amount = int(
         await menu.input("Please input how many times you'd like to send the report")
@@ -59,7 +57,7 @@ async def user_report():
 
 
 @tox.cmd(description="Reports a guild using an id")
-async def guild_report():
+async def guild():
     menu = Menu()
 
     reporter = Tox(0)
@@ -76,7 +74,7 @@ async def guild_report():
 
 
 @tox.cmd(description="Reports a message using a link")
-async def msg_report():
+async def message():
     menu = Menu()
 
     reporter = Tox(3)
@@ -120,6 +118,19 @@ async def scrape_channel():
     content = await menu.input("Please input message content you wish to search for.")
     msgs = await reporter.filter_channel(TOKEN, channel_id, content)
     await menu.write_file(msgs)
+
+@tox.cmd(description="Gets information regarding invite")
+async def invite_check():
+    menu = Menu()
+    reporter = Tox()
+    inv = await menu.input("Please input an invite.")
+    inv = (await reporter.invite_data(TOKEN, inv))[1][0]
+    await aprint(f"""
+Invite: discord.gg/{inv['code']}
+Guild: {inv['guild']['name']}
+ID: {inv['guild']['id']}
+Approximate Members: {inv['approximate_member_count']}
+    """)
 
 
 asyncio.run(main())

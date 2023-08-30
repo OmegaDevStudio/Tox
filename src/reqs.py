@@ -51,14 +51,15 @@ class RequestHandler:
         self, resps: list[aiohttp.ClientResponse]
     ) -> list[str | dict]:
         """Runs multiple asynchronous json responses"""
+        statuses = [resp.status for resp in resps]
         try:
-            return await asyncio.gather(
+            return (statuses, await asyncio.gather(
                 *(asyncio.create_task(self.json(resp)) for resp in resps)
-            )
+            ))
         except aiohttp.client_exceptions.ContentTypeError:
-            return await asyncio.gather(
+            return (statuses, await asyncio.gather(
                 *(asyncio.create_task(self.text(resp)) for resp in resps)
-            )
+            ))
 
     async def close(self):
         """Closes client session"""

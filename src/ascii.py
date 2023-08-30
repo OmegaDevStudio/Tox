@@ -7,12 +7,12 @@ from colorama import Fore as color
 class Menu:
     def __str__(self):
         return f"""{color.LIGHTYELLOW_EX}
-{color.LIGHTYELLOW_EX}██████╗░██╗░░░██╗██████╗░██╗███████╗██╗░░░██╗
-{color.LIGHTYELLOW_EX}██╔══██╗██║░░░██║██╔══██╗██║██╔════╝╚██╗░██╔╝
-{color.LIGHTYELLOW_EX}██████╔╝██║░░░██║██████╔╝██║█████╗░░░╚████╔╝░
-{color.LIGHTYELLOW_EX}██╔═══╝░██║░░░██║██╔══██╗██║██╔══╝░░░░╚██╔╝░░
-{color.LIGHTYELLOW_EX}██║░░░░░╚██████╔╝██║░░██║██║██║░░░░░░░░██║░░░            {color.RED}Github: https://github.com/Shell1010/Tox
-{color.LIGHTYELLOW_EX}╚═╝░░░░░░╚═════╝░╚═╝░░╚═╝╚═╝╚═╝░░░░░░░░╚═╝░░░            {color.RED}Author: Shell
+{color.LIGHTYELLOW_EX}████████╗░█████╗░██╗░░██╗██╗███████╗██╗░░░██╗
+{color.LIGHTYELLOW_EX}╚══██╔══╝██╔══██╗╚██╗██╔╝██║██╔════╝╚██╗░██╔╝
+{color.LIGHTYELLOW_EX}░░░██║░░░██║░░██║░╚███╔╝░██║█████╗░░░╚████╔╝░
+{color.LIGHTYELLOW_EX}░░░██║░░░██║░░██║░██╔██╗░██║██╔══╝░░░░╚██╔╝░░
+{color.LIGHTYELLOW_EX}░░░██║░░░╚█████╔╝██╔╝╚██╗██║██║░░░░░░░░██║░░░            {color.RED}Github: https://github.com/Shell1010
+{color.LIGHTYELLOW_EX}░░░╚═╝░░░░╚════╝░╚═╝░░╚═╝╚═╝╚═╝░░░░░░░░╚═╝░░░            {color.RED}Author: Shell1010
 {color.LIGHTYELLOW_EX}============================================================================================={color.RESET}
         """
 
@@ -31,7 +31,7 @@ class Menu:
 
     @staticmethod
     async def write_file(resp: list[dict[str, str]]):
-        for msg in resp:
+        for msg in resp[1]:
             async with aiofiles.open(f"{msg.channel_id}.txt", "a+") as f:
                 content = f"""
 MESSAGE ID : {msg.id}
